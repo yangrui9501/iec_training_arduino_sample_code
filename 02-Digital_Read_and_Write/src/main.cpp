@@ -35,4 +35,5 @@ void loop()
     Serial.print(" | Button 2: ");
     Serial.print(button_2);
     Serial.println();
+    Serial.flush();
 }
