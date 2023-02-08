@@ -2,6 +2,9 @@
 
 ###### tags: `IEC Arduino Training`
 
+
+![image](./figure/L298N.png)
+
 ## 環境建置
 
 要安裝的東西列表如下：
