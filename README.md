@@ -1,6 +1,9 @@
 # Arduino 基礎教育訓練
 
-###### tags: `Arduino` `IEC Training`
+###### tags: `IEC Arduino Training`
+
+
+![image](./figure/L298N.png)
 
 ## 環境建置
 
