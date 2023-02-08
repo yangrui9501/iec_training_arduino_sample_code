@@ -1,9 +1,7 @@
 # Arduino 基礎教育訓練
 
-###### tags: `IEC Arduino Training`
+###### tags: `Arduino` `IEC Training`
 
-
-![image](./figure/L298N.png)
 
 ## 環境建置
 
@@ -244,17 +242,52 @@ void loop()
     - `pin`: the Arduino pin number you want to read.
 :::
 
-### 硬體介紹：上拉電阻與下拉電阻
+### 硬體說明：上拉電阻與下拉電阻
 
-- [電路圖](https://www.tinkercad.com/things/is0dTtxzg72-copy-of-switch-pull-up-amp-pull-down/editel?sharecode=zKJHoPkaN7cas7E8m7LCUM5VlTfSC2SA65QWkj5ELaA)
+- 按鈕原理
+- 上拉電阻與下拉電阻
 
-### 實作：按鈕、LED與數位腳位輸入輸出
+#### 按鈕原理
 
-硬體電路
+按鈕按下去 1--2 會導通。
+
+![](https://hackmd.io/_uploads/BkfmHngas.jpg)
+
+#### 電路圖：上拉電阻 (左半) 與 下拉電阻 (右半)
+
+- 目的：利用按鈕與開關搭建邏輯訊號的切換 (0V or 3.3V)
+- 關於左半的上拉電阻：
+    - 上拉的意思是電阻靠近電源端。
+    - 沒有導通時，digitalRead 1 讀到的電壓值是 3.3 V，電路沒有導通時電阻沒有作用。
+    - 導通時，因為跟地對接，所以會讀到 0 V。
+- 關於右邊的下拉電阻：
+    - 下拉的意思是電阻靠近地端
+    - 沒有導通時，因為跟地連接，所以 digitalRead 2 讀到的電壓值則是 0 V。
+    - 導通時，因為跟電源連接，所以讀值是 3.3 V。
+![](https://hackmd.io/_uploads/SkkfHnxas.png)
+
+### 硬體實作：按鈕、LED與數位腳位輸入輸出
+
+:::success
+硬體接線：
+- 上拉電阻
+    1. 電源 3.3 V 與按鈕 1 號腳，中間串聯一個電阻
+    2. 按鈕 1 號腳接線至 GPIO 2 (digitalRead() 訊號)
+    3. 按鈕 2 號腳連接至地
+    4. MCU 接地
+- 下拉電阻
+    1. 電源 3.3 V 連接至按鈕 1 號腳
+    2. 按鈕 2 號腳接到 GPIO 3 (digitalRead() 訊號)
+    3. 按鈕 2 號腳與地，中間串聯一個電阻
+    4. MCU 接地
+:::
+接線成果可參考下圖，線上接線可參考[這裡](https://www.tinkercad.com/things/is0dTtxzg72-copy-of-switch-pull-up-amp-pull-down/editel?sharecode=zKJHoPkaN7cas7E8m7LCUM5VlTfSC2SA65QWkj5ELaA)~
+
+![](https://hackmd.io/_uploads/SJN3q6gTs.jpg)
 
 
+範例程式碼：
 
-範例程式碼
 ```cpp=
 // 2023-02-06
 // 範例：digitalRead() and digitalWrite()
@@ -274,7 +307,7 @@ void setup()
     pinMode(PIN_BUTTON_2, INPUT);
     pinMode(LED_BUILTIN, OUTPUT);
 
-    // (習慣上) 輸出腳位會預設是最低值，避免記憶體裡面的殘值，讓硬體暴衝
+    // (習慣上) 輸出腳位會預設是最低值，避免記憶體裡面的殘值讓硬體暴衝
     digitalWrite(LED_BUILTIN, LOW);
 }
 
@@ -325,21 +358,47 @@ void loop()
 
 ### 固定 duty cycle 看看 PWM 頻率對連續訊號的影響
 
+### 硬體說明：可變電阻
 
-### 實作：可變電阻與 RC 電路
+因為電阻正比於長度，反比於截面積，即 $R \propto \cfrac{\ell}{A}$，所以旋轉旋鈕可以改變下圖中 2 的位置，意味著可以藉由改變 1 - 2 的長度來改變電阻值。([圖片來源](https://www.digikey.tw/zh/articles/the-fundamentals-of-digital-potentiometers))
+
+![](https://hackmd.io/_uploads/rkSP23gTj.png)
+
+以下圖為例，可變電阻電路可視為兩個電阻串聯，中間電壓可由分壓定律求得：
+
+$$
+V_{out} = \frac{R_{2}}{R_{1}+R_{2}}V_{1}
+$$
+
+因為 $R_{1}+R_{2}$ 是定值，故 $V_{out}\propto R_{2} \propto \ell \propto \theta$，$\theta$ 是旋鈕旋轉角度。理想是是線性元件，但實際上不是。
+
+![](https://hackmd.io/_uploads/HJzxR2lpi.png)
+
+### 硬體說明：RC 電路
+
+![](https://hackmd.io/_uploads/r1q3BhlTs.png)
+
+### 硬體實作：讀取可變電阻分壓
+
+:::success
+硬體接線步驟 (Teensy 3.2)：
+
+1. 將 3.3 V 連接可變電阻 Vcc 端。
+2. 將 GPIO 22 (A8) 連接至可變電阻 Output 端，即：22號腳位為 analogRead() 腳位。
+3. 將可變電阻 GND 端連接至地。
+4. 將 MCU GND 端連接至地。
+:::
+
+範例程式：
 
 ```cpp=
 // 2023-02-06
-// 範例：analogWrite() and angloagRead()
+// 範例：analogWrite()
 
 #include <Arduino.h>
 
-#define PIN_VR A1 // 輸入
-#define PIN_LED A9 // 輸出
-
+#define PIN_VR_INPUT A1 // 可變電阻分壓輸入
 #define CONFIG_ANALOG_READ_RES 10 // 解析度是 10，代表值的範圍是 0 ~ 1023 (2^10)，0 對應到 0 V，1023 對應 3.3 V。
-#define CONFIG_ANALOG_WRITE_RES 10 // 同上邏輯
-#define CONFIG_ANALOG_WRITE_FREQ_HZ 10000 // 寫入 PWM 的頻率是 10 Hz
 
 void setup()
 {
@@ -347,24 +406,14 @@ void setup()
     Serial.begin(115200);
 
     // 腳位初始化與設定解析度
-    pinMode(PIN_VR, INPUT);
+    pinMode(PIN_VR_INPUT, INPUT);
     analogReadResolution(CONFIG_ANALOG_READ_RES);
-
-    pinMode(PIN_LED, OUTPUT);
-    analogWriteResolution(CONFIG_ANALOG_WRITE_RES);
-    analogWriteFrequency(PIN_LED, CONFIG_ANALOG_WRITE_FREQ_HZ);
-
-    // (習慣上) 輸出腳位會預設是最低值，避免記憶體裡面的殘值，讓硬體暴衝
-    analogWrite(PIN_LED, 0);
 }
 
 void loop()
 {
     // 利用 analogRead() 讀取可變電阻讀值
-    int vr_val = analogRead(PIN_VR);
-
-    // 利用 analogWrite() 控制 LED 亮度
-    analogWrite(PIN_LED, vr_val);
+    int vr_val = analogRead(PIN_VR_INPUT);
 
     // Print 資料
     Serial.print("可變電阻讀值: ");
@@ -407,6 +456,10 @@ void isr_hwit()
 :::
 
 ### 實作：按鈕點亮 LED
+
+請把之前上拉電阻的實作接回來~
+
+範例程式：
 
 ```cpp=
 // 2023-02-06
@@ -460,6 +513,8 @@ void isr_hwit_button_1()
 
 ### 實作：時間中斷 (Teensyduino)
 
+不需要額外接硬體，只需要MCU~
+
 ```cpp=
 // 2023-02-06
 // 範例：IntervalTimer
@@ -507,10 +562,51 @@ void isr()
 
 ## Arduino 專題實作：直流碳刷馬達的位置與速度控制
 
-### 硬體簡介
+
+### 硬體說明：L298N 馬達驅動板
+
+- 功能：把 3.3 V 的 PWM 訊號放大到 12 V。
+- `Control 1` 的兩個接腳 (`IN1`, `In2`) 分別接收來自 MCU 對馬達「正轉」跟「反轉」的命令 (或相反)，而 `Load 1` 中的 `OUT1`, `OUT2` 則是對應的放大訊號。
+- Input Vcc 是外部直流電源 (12 V)。
+
+![](https://hackmd.io/_uploads/BkzCqnl6s.png)
+
+### 硬體說明：直流碳刷馬達
+
+- `Motor V+` 跟 `Motor V-` 分別對應到正轉跟反轉 (或相反)。
+- `Encoder 5V` 就是給 Encoder 的 5V 供電。
+- `Encoder A phase` 跟 `Encoder B phase` 是解算馬達位置訊號的兩個腳位，我們會把它接給 LS7366R 這個晶片 (以下稱為 QEI)，讓這個晶片幫我們解。
+
+- Encoder 5V 和 Encoder GND 絕對不能接錯電壓，不然會燒掉。
+
+![](https://hackmd.io/_uploads/H1hc6nlai.png)
 
 
-## 基本程式庫與腳位定義
+### 硬體說明：Quadrature Encoder Interface, QEI
+
+- 這個晶片可以幫我們解 encoder 的 A, B phase 來得到馬達的位置資訊。
+- 需要注意的是，這個晶片透過 SPI 協議跟 MCU 溝通，也就是說，要獲得這個晶片的資訊，要透過 `<SPI.h>` 這個函式庫。
+- 補充：SPI 必有的四個腳位
+    - CS: chip select (可以接在 MCU 任意 digital 腳位)
+    - SCK: serial clock (按照 MCU 說明書)
+    - MISO: master-input-slave-output (按照 MCU 說明書)
+    - MOSI: master-output-slave-input (按照 MCU 說明書)
+
+![](https://hackmd.io/_uploads/B1BiGpeps.png)
+
+![](https://hackmd.io/_uploads/HkPvrW-pj.png)
+
+### 硬體接線：MCU-驅動板-Motor
+
+![](https://hackmd.io/_uploads/BJszGTepo.png)
+
+### 硬體接線：MCU-QEI-Motor
+
+- 請注意：Power 12 V (黑線) 要跟 MCU 的 GND 共地。
+
+![](https://hackmd.io/_uploads/BkgDzpgaj.png)
+
+### 基本程式庫與腳位定義
 
 需要引入的程式庫
 
@@ -521,7 +617,7 @@ void isr()
 
 腳位定義
 ```cpp=
-#define PIN_QEI 10       // 馬達的 Encoder 腳位
+#define PIN_QEI_CS 10       // 馬達的 Encoder 腳位
 #define PIN_MOTOR_PWM_CW 22   // 馬達正轉的 PWM 腳位
 #define PIN_MOTOR_PWM_CCW 23  // 馬達負轉的 PWM 腳位
 #define PIN_VR_INPUT A7 // 輸入
@@ -552,47 +648,6 @@ lib_deps =
 
 PlatformIO 就會自動幫你各位安裝程式庫囉！非常方便。安裝好的程式庫會在 `.pio/libdeps/teensy31` 路徑之下。
 
-### 積分器實作
-
-Consider
-
-$$
-y(t) = \int_{0}^{t}\!f(t)\,dt
-$$  
-
-or
-
-$$
-\dot{y}(t) = f(t)
-$$
-
-Backward difference discretization
-
-$$
-\dot{y}(kT) \approx \frac{y(kT)-y(kT-T)}{T}
-$$
-
-which implies
-
-$$ 
-\begin{align}
-y[k] &= y[k-1] + f[k] \times T \\[1em]
-現在位置 &= 前一筆位置 + 速度 \times 時間
-\end{align}
-$$
-
-Pseudo code: intergator with a sample interval of $T$
-
-```cpp
-// error = f(t)
-i_term += error * T;
-```
-
-Pseudo code: Reseting the intergrator value
-
-```cpp
-i_term = 0.0;
-```
 
 ### 速度解算
 
@@ -643,6 +698,47 @@ void isr_hwit_speed_decode()
 }
 ```
 
+### 積分器實作
+
+Consider
+
+$$
+y(t) = \int_{0}^{t}\!f(t)\,dt
+$$  
+
+or
+
+$$
+\dot{y}(t) = f(t)
+$$
+
+Backward difference discretization
+
+$$
+\dot{y}(kT) \approx \frac{y(kT)-y(kT-T)}{T}
+$$
+
+which implies
+
+$$ 
+\begin{align}
+y[k] &= y[k-1] + f[k] \times T \\[1em]
+現在位置 &= 前一筆位置 + 速度 \times 時間
+\end{align}
+$$
+
+Pseudo code: intergator with a sample interval of $T$
+
+```cpp
+// error = f(t)
+i_term += error * T;
+```
+
+Pseudo code: Reseting the intergrator value
+
+```cpp
+i_term = 0.0;
+```
 
 ### 參考程式庫
 
