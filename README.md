@@ -1,6 +1,6 @@
 # Arduino 基礎教育訓練
 
-###### tags: `IEC Arduino Training`
+###### tags: `Arduino` `IEC Training`
 
 ## 環境建置
 
