@@ -3,8 +3,8 @@
 
 #include <Arduino.h>
 
-#define PIN_BUTTON_1 2 // 上拉電阻型按鈕，預設是 1，按下變 0
-#define PIN_BUTTON_2 3 // 下拉電阻型按鈕，預設是 0，按下變 1
+#define PIN_BUTTON_1 12 // 上拉電阻型按鈕，預設是 1，按下變 0
+#define PIN_BUTTON_2 11 // 下拉電阻型按鈕，預設是 0，按下變 1
 
 void setup()
 {
@@ -30,10 +30,10 @@ void loop()
     digitalWrite(LED_BUILTIN, button_2);
 
     // Print 資料
-    Serial.print("Button 1: ");
     Serial.print(button_1);
-    Serial.print(" | Button 2: ");
+    Serial.print(" ");
     Serial.print(button_2);
+    Serial.print(" ");
     Serial.println();
     Serial.flush();
 }
